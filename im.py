@@ -67,14 +67,14 @@ im.generate_imported_values_mapping()
 pcb_items = PcbItems(im.pcb_items)
 changes_count = mapping.merge_mapping(im.imported_mapping)
 if changes_count:
+    print("Updating mapping; the old one will be saved as .bak")
     mapping.save_mapping(im.imported_mapping)
 pcb_parts = PcbParts()
 if mapping.is_resolved():
     gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
     print("Files generated: {} {}".format(config_seq_file,config_parts_file))
 else:
-#    gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
-    print("Mapping is not resolved, exiting")
+    print("ERROR: Mapping IS NOT resolved, exiting")
 
 
 #  sheet.cell(row=row,column=headers.index("Package")+1).number_format = '@'

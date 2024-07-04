@@ -135,7 +135,7 @@ class Mapping:
         #     self.__is_resolved = False
         #     print("Absent: {}".format(p))
 
-        print("Changes: {}".format(self.changes_count))
+        print("Mapping changes: {}".format(self.changes_count))
         return self.changes_count
 
     def __get_column_by_name(self, name) -> int:
@@ -155,7 +155,11 @@ class Mapping:
             row += 1
         if not self.__is_new:
             shutil.copy(self.mapping_file, self.mapping_file + ".bak")
-        self.workbook.save(filename=self.mapping_file)
-
+        try:
+            self.workbook.save(filename=self.mapping_file)
+        except Exception as err:
+            print("CAN't update mapping file {}: {}\nExiting!".format(self.mapping_file, err))
+            exit(100)
+            
     def is_resolved(self) -> bool:
         return self.__is_resolved
