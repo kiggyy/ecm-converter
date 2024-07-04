@@ -87,7 +87,7 @@ class Mapping:
             row_no = self.current_mapping_values.get(key, 0)
             if row_no:
                 row = self.sheet[row_no]
-                print("Found {}, row {}".format(val, row_no))
+#                print("Found {}, row {}".format(val, row_no))
                 p["row"] = row_no  # update the pointed cell
                 for i in [
                     "H",
@@ -105,7 +105,7 @@ class Mapping:
                     "Remark3",
                 ]:
                     p[i] = row[self.__get_column_by_name(i) - 1].value
-                    if not p[i] and i not in ["Arot", "W", "Afed"]:
+                    if p[i] == None and i not in ["W", "Afed"]:
                         print(
                             "Row {}: part {}/{} has zero attribute {}".format(
                                 row_no, val, p["Footprint"], i

@@ -1,28 +1,41 @@
 import pandas as pd
 import re
 
-PACKAGE_SIZES = {
-    "R0201": "0.6x0.3/Nz=2",
-    "C0201": "0.6x0.3/Nz=2",
-    "R0405": "1.0x0.5/Nz=2",
-    "C0405": "1.0x0.5/Nz=2",
-    "R0603": "1.7x0.8x0.45/Nz=2",
-    "C0603": "1.7x0.8/Nz=2",
-    "R0805": "2.0x1.25x0.5/Nz=2",
-    "C0805": "2.0x1.25/Nz=2",
-    "R1206": "3.2x1.6/Nz=2",
-    "C1206": "3.2x1.6/Nz=2",
-    "R1210": "3.2x2.5/Nz=2",
-    "C1210": "3.2x2.5/Nz=2",
-    "R1218": "3.2x4.6/Nz=2",
-    "C1218": "3.2x4.6/Nz=2",
-    "R2010": "5.0x2.5/Nz=2",
-    "C2010": "5.0x2.5/Nz=2",
-    "R2512": "6.3x3.2/Nz=2",
-    "C2512": "6.3x3.2/Nz=2",
-    "SOT23": "2.9x2.4x0.9",
-    "SMA": "3.56x2.92",
+FIELD_CASE = "Case"
+
+PACKAGE_SIZES_REGEXP = {
+    "^#?S(?P<S>[0-9.]+)H(?P<H>[0-9.]+)":"",
+    "^#?L(?P<L>[0-9.]+)W(?P<W>[0-9.]+)H(?P<H>[0-9.]+)":"",
 }
+
+PACKAGE_SIZES = {
+    "R0201": "0.6x0.3x0.5/Nz=2",
+    "C0201": "0.6x0.3x0.5/Nz=2",
+    "R0405": "1.0x0.5x0.5/Nz=2",
+    "C0405": "1.0x0.5x0.5/Nz=2",
+    "R0603": "1.7x0.8x0.45/Nz=2",
+    "C0603": "1.7x0.8x0.5/Nz=2",
+    "R0805": "2.0x1.25x0.5/Nz=2",
+    "C0805": "2.0x1.25x0.5/Nz=2",
+    "R1206": "3.2x1.6x0.5/Nz=2",
+    "C1206": "3.2x1.6x0.5/Nz=2",
+    "R1210": "3.2x2.5x0.5/Nz=2",
+    "C1210": "3.2x2.5x0.5/Nz=2",
+    "R1218": "3.2x4.6x0.5/Nz=2",
+    "C1218": "3.2x4.6x0.5/Nz=2",
+    "R2010": "5.0x2.5x0.5/Nz=2",
+    "C2010": "5.0x2.5x0.5/Nz=2",
+    "R2512": "6.3x3.2x0.5/Nz=2",
+    "C2512": "6.3x3.2x0.5/Nz=2",
+    "Q3225": "3.2x2.5x0.8/Nz=2",
+    "SOT23": "2.9x1.7/Nz=2",
+    "SOT23-5": "2.9x1.7/Nz=2",
+    "SOT23-6": "2.9x1.7/Nz=2",
+    "SOT223": "6.4x4/Nz=2",
+    "SOD523" : "1.2x0.8x0.6/Nz=2",
+    "LQFP48" : "7x7/Nz=2",
+}
+#    "SMA": "3.56x2.92",
 
 PACKAGE_TO_ECM_TYPE = {
     "^SO": "SOP",
@@ -41,7 +54,7 @@ class ImportPcb:
             for l in f:
                 if l.strip():
                     row += 1
-                if "Footprint_SMD" in l:
+                if FIELD_CASE in l:
                     break
 
         self.pcb_items = pd.read_csv(
@@ -58,13 +71,13 @@ class ImportPcb:
     #        self.pcb_items.Value = self.pcb_items.apply( lambda x: x.Value if x.Value else x.Description, axis=1)
 
     def generate_imported_values_mapping(self) -> None:
-        values = self.pcb_items.groupby(["Value", "Footprint_SMD"], dropna=False)
+        values = self.pcb_items.groupby(["Value", FIELD_CASE], dropna=False)
         self.imported_mapping = {}
         index = 0
         for v in values:
             value = v[0][0]
             footprint = v[0][1].upper().strip()
-            if footprint in ["TH", "FEDUCIAL", "REFERENCE"]:
+            if footprint in ["TH", "PCB", "FEDUCIAL", "REFERENCE"]:
                 continue
             key = value + "#:#" + footprint
             designators = (
@@ -76,7 +89,7 @@ class ImportPcb:
             t = v[1].Type.array[0]
             index += 1
             p = {}
-            p["Feeder"] = 0
+            p["Feeder"] = ""
             p["Value"] = value
             p["Footprint"] = footprint
             p["Type"] = t["T"]
@@ -86,12 +99,12 @@ class ImportPcb:
             p["H"] = t["H"] if "H" in t else ""
             p["W"] = 0
             p["Afed"] = 0
-            p["Arot"] = t["Arot"] if "Arot" in t else 0
+            p["Arot"] = t["Arot"] if "Arot" in t else ""
             p["Designators"] = designators
             p["DesignatorsCount"] = v[1].Designator.count()
             p["row"] = 0
             p["PartNo"] = index
-            p["Nz"] = t["Nz"] if "Nz" in t else 0
+            p["Nz"] = t["Nz"] if "Nz" in t else ""
             p["FIdx"] = 1
             p["Strk"] = 310
             p["PartRemarkTS"] = 70
@@ -109,11 +122,11 @@ class ImportPcb:
         # Under +++ of remark, if numeric value exists then the tape will be advanced during the nozzle
         # is in down position and wait specified time (1/100 sec) and picks up a component. This feature
         # is useful to pick up very tiny component such as 0201
-        footprint = row.Footprint_SMD
+        footprint = row.Case
         #        description = row.Footprint
         #        description_items = description.split('/')
 
-        unknown = {"T": "", "P": "", "Part": "Unknown"}
+        unknown = {"T": "", "P": "", "Part": ""}
         if not isinstance(footprint, str) or footprint.strip() == "":
             return unknown
 
@@ -124,18 +137,36 @@ class ImportPcb:
                 break
 
         m = re.match("([A-Za-z]+)([0-9]+)?", footprint)
-        if not m:
-            return unknown
-        prefix = m[1]
+        prefix = m[1] if m else ""
         #    if prefix not in ['R','C']:
         #        m = re.match("([A-Za-z]+)[0-9]+", designator)
         #        if not m:
         #            return unknown
         #        prefix = m[1]
 
-        defines = (PACKAGE_SIZES[footprint] if footprint in PACKAGE_SIZES else "?x?x?").split("/")
-        size = (defines[0] + "x?").split("x")
-        t = {"T": footprint, "X": size[0], "Y": size[1], "H": size[2]}
+        t = None
+        if footprint in PACKAGE_SIZES:
+            defines = (PACKAGE_SIZES[footprint] if footprint in PACKAGE_SIZES else "xx").split("/")
+            size = (defines[0] + "x").split("x")
+            t = {"T": footprint, "X": size[0], "Y": size[1], "H": size[2]}
+        else:
+            for i in PACKAGE_SIZES_REGEXP:
+                r = re.match(i, footprint)
+                if not r:
+                    continue
+                H = r['H']
+                if 'S' in r.groupdict():
+                    X = r['S']
+                    Y = X
+                else:
+                    X = r['L']
+                    Y = r['W']
+                t = {"T": footprint, "X": X, "Y": Y, "H": H}
+                defines = PACKAGE_SIZES_REGEXP[i].split("/")
+                break
+        if not t:
+            return unknown
+                
         properties = {}
         for i in defines:
             r = re.match("([A-Z0-9a-z_]+)=(.+)", i)

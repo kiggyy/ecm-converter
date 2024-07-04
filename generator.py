@@ -39,6 +39,12 @@ class Generator:
         )
         self.__bias = self.__rotate_pcb_cooordinates(bias)
 
+    def __set_size(self, size: PcbPoint) -> None:
+        self.__size = PcbPoint(
+            X=self.board_info.Xsize_mm if self.board_info.Xsize_mm !=0 else size.X,
+            Y=self.board_info.Ysize_mm if self.board_info.Ysize_mm !=0 else size.Y
+        )
+
     def __adjust_pcb_coordinates(self, point: PcbPoint, bias: bool = False) -> PcbPoint:
         point = self.__rotate_pcb_cooordinates(point)
         if bias:
@@ -62,9 +68,9 @@ class Generator:
     
     def __rotate_pcb_cooordinates(self, point: PcbPoint) -> PcbPoint:
         if self.board_info.Rotate == -90:
-            point = PcbPoint(Y=point.X, X=self.board_info.Ysize_mm - point.Y)
+            point = PcbPoint(Y=point.X, X=self.__size.Y - point.Y)
         elif self.board_info.Rotate == 90:
-            point = PcbPoint(X=point.Y, Y=self.board_info.Xsize_mm - point.X)
+            point = PcbPoint(X=point.Y, Y=self.__size.X - point.X)
         return point
 
     def __generate_parts(self, pcb_parts: list[PartsItem], file_name) -> None:
@@ -85,6 +91,7 @@ class Generator:
             f.writelines("\n".join(s))
 
     def __generate_seq(self, pcb_assets: PcbAssets, file_name) -> None:
+        self.__set_size(pcb_assets.Size) # order of these calls is important!
         self.__set_bias(pcb_assets.Bias)
 
         with open(file_name, "wt") as f:
