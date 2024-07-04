@@ -8,25 +8,36 @@ from generator import Generator, BoardInfo
 from pcb_items import PcbItems
 from pcb_parts import PcbParts
 
-
-project_dir, project_file = os.path.split(sys.argv[-1])
-project_file_name, project_file_ext = os.path.splitext(project_file)
+project_file = sys.argv[-1]
+project_dir, project_file_name_ext = os.path.split(project_file)
+project_file_name, project_file_ext = os.path.splitext(project_file_name_ext)
 
 with open(project_file) as f:
     config = yaml.safe_load(f)
+
 config_project_name = (
     project_file_name if "project_name" not in config else config["project_name"]
 )
 config_mapping_file = (
     config_project_name + "-mapping.xlsx"
-    if "mapping_file" not in config
+if "mapping_file" not in config
     else config["mapping_file"]
 )
+    
 config_import_pcb_file = (
     config_project_name + ".csv"
     if "import_pcb_file" not in config
     else config["import_pcb_file"]
 )
+
+config_seq_file = os.path.join(project_dir, config_project_name + ".seq")
+config_parts_file = os.path.join(project_dir, "part.dat")
+
+if project_dir:
+    if os.path.sep not in config_mapping_file:
+        config_mapping_file = os.path.join(project_dir, config_mapping_file)
+    if os.path.sep not in config_import_pcb_file:
+        config_import_pcb_file = os.path.join(project_dir,config_import_pcb_file)
 
 im = ImportPcb()
 
@@ -54,13 +65,14 @@ gen = Generator(board_info)
 im.read_input(config_import_pcb_file)
 im.generate_imported_values_mapping()
 pcb_items = PcbItems(im.pcb_items)
-mapping.merge_mapping(im.imported_mapping)
-mapping.save_mapping(im.imported_mapping)
+changes_count = mapping.merge_mapping(im.imported_mapping)
+if changes_count:
+    mapping.save_mapping(im.imported_mapping)
 pcb_parts = PcbParts()
 if mapping.is_resolved():
-    gen.generate(pcb_items, pcb_parts, im.imported_mapping)
+    gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
 else:
-    gen.generate(pcb_items, pcb_parts, im.imported_mapping)
+#    gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
     print("Mapping is not resolved, exiting")
 
 

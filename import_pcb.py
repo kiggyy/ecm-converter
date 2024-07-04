@@ -2,24 +2,24 @@ import pandas as pd
 import re
 
 PACKAGE_SIZES = {
-    "R0201": "0.6x0.3",
-    "C0201": "0.6x0.3",
-    "R0405": "1.0x0.5",
-    "C0405": "1.0x0.5",
-    "R0603": "1.7x0.8x0.45",
-    "C0603": "1.7x0.8",
-    "R0805": "2.0x1.25x0.5",
-    "C0805": "2.0x1.25",
-    "R1206": "3.2x1.6",
-    "C1206": "3.2x1.6",
-    "R1210": "3.2x2.5",
-    "C1210": "3.2x2.5",
-    "R1218": "3.2x4.6",
-    "C1218": "3.2x4.6",
-    "R2010": "5.0x2.5",
-    "C2010": "5.0x2.5",
-    "R2512": "6.3x3.2",
-    "C2512": "6.3x3.2",
+    "R0201": "0.6x0.3/Nz=2",
+    "C0201": "0.6x0.3/Nz=2",
+    "R0405": "1.0x0.5/Nz=2",
+    "C0405": "1.0x0.5/Nz=2",
+    "R0603": "1.7x0.8x0.45/Nz=2",
+    "C0603": "1.7x0.8/Nz=2",
+    "R0805": "2.0x1.25x0.5/Nz=2",
+    "C0805": "2.0x1.25/Nz=2",
+    "R1206": "3.2x1.6/Nz=2",
+    "C1206": "3.2x1.6/Nz=2",
+    "R1210": "3.2x2.5/Nz=2",
+    "C1210": "3.2x2.5/Nz=2",
+    "R1218": "3.2x4.6/Nz=2",
+    "C1218": "3.2x4.6/Nz=2",
+    "R2010": "5.0x2.5/Nz=2",
+    "C2010": "5.0x2.5/Nz=2",
+    "R2512": "6.3x3.2/Nz=2",
+    "C2512": "6.3x3.2/Nz=2",
     "SOT23": "2.9x2.4x0.9",
     "SMA": "3.56x2.92",
 }
@@ -85,12 +85,13 @@ class ImportPcb:
             p["Y"] = t["Y"] if "Y" in t else ""
             p["H"] = t["H"] if "H" in t else ""
             p["W"] = 0
-            p["A"] = ""
+            p["Afed"] = 0
+            p["Arot"] = t["Arot"] if "Arot" in t else 0
             p["Designators"] = designators
             p["DesignatorsCount"] = v[1].Designator.count()
             p["row"] = 0
             p["PartNo"] = index
-            p["Nz"] = 1
+            p["Nz"] = t["Nz"] if "Nz" in t else 0
             p["FIdx"] = 1
             p["Strk"] = 310
             p["PartRemarkTS"] = 70
@@ -132,11 +133,15 @@ class ImportPcb:
         #            return unknown
         #        prefix = m[1]
 
-        size = (
-            PACKAGE_SIZES[footprint] + "x?" if footprint in PACKAGE_SIZES else "?x?x?"
-        ).split("x")
+        defines = (PACKAGE_SIZES[footprint] if footprint in PACKAGE_SIZES else "?x?x?").split("/")
+        size = (defines[0] + "x?").split("x")
         t = {"T": footprint, "X": size[0], "Y": size[1], "H": size[2]}
-
+        properties = {}
+        for i in defines:
+            r = re.match("([A-Z0-9a-z_]+)=(.+)", i)
+            if r:
+                properties[r[1]] = r[2]
+                
         if prefix in ["R", "C"]:
             #            if( 1 not in description_items or
             #               (description_items[0] + description_items[1]) != footprint):
@@ -146,6 +151,10 @@ class ImportPcb:
             ecm_prefix = "SOP" if not ecm_prefix else ecm_prefix
             t["P"] = prefix
             t["Part"] = ecm_prefix + footprint
+            t["Arot"] = 90
+            if 'Nz' in properties:
+                t['Nz'] = properties['Nz']
+                
         elif prefix == "L":
             ecm_prefix = "SOP" if not ecm_prefix else ecm_prefix
             t["P"] = "L"

@@ -11,7 +11,8 @@ MAPPING_COLUMNS = {
     "Y": 5,
     "H": 5,
     "W": 4,
-    "A": 5,
+    "Afed": 5,
+    "Arot": 5,
     "Nz": 4,
     "Strk": 5,
     "FIdx": 4,
@@ -71,10 +72,11 @@ class Mapping:
                 return idx
         return 0
 
-    def merge_mapping(self, pcb_new_mapping) -> bool:
+    def merge_mapping(self, pcb_new_mapping) -> int:
         if self.__is_new:
-            return False
-        changes_count = 0
+            self.changes_count = -1
+            return self.changes_count
+        self.changes_count = 0
 
         self.__is_resolved = True
         current_mapping_values = self.current_mapping_values.copy()
@@ -83,16 +85,17 @@ class Mapping:
             if val != val:
                 continue
             row_no = self.current_mapping_values.get(key, 0)
-            row = self.sheet[row_no]
             if row_no:
+                row = self.sheet[row_no]
                 print("Found {}, row {}".format(val, row_no))
                 p["row"] = row_no  # update the pointed cell
                 for i in [
                     "H",
-                    "A",
                     "Feeder",
                     "X",
                     "Y",
+                    "Afed",
+                    "Arot",
                     "W",
                     "PartRemark",
                     "Nz",
@@ -102,7 +105,7 @@ class Mapping:
                     "Remark3",
                 ]:
                     p[i] = row[self.__get_column_by_name(i) - 1].value
-                    if not p[i]:
+                    if not p[i] and i not in ["Arot", "W", "Afed"]:
                         print(
                             "Row {}: part {}/{} has zero attribute {}".format(
                                 row_no, val, p["Footprint"], i
@@ -113,7 +116,7 @@ class Mapping:
                 for i in ["Designators"]:
                     col = self.__get_column_by_name(i) - 1
                     if p[i] != row[col].value:
-                        changes_count += 1
+                        self.changes_count += 1
                         print(
                             "Row {}: part {}/{} changed {}: {} -> {}".format(
                                 row_no, val, p["Footprint"], i, row[col].value, p[i]
@@ -123,7 +126,7 @@ class Mapping:
 
                 current_mapping_values[val] = 0
             else:
-                changes_count += 1
+                self.changes_count += 1
                 self.__is_resolved = False
                 print("New value {}".format(val))
 
@@ -132,8 +135,8 @@ class Mapping:
         #     self.__is_resolved = False
         #     print("Absent: {}".format(p))
 
-        print("Changes: {}".format(changes_count))
-        return self.__is_resolved
+        print("Changes: {}".format(self.changes_count))
+        return self.changes_count
 
     def __get_column_by_name(self, name) -> int:
         return MAPPING_HEADERS.index(name) + 1 if name in MAPPING_HEADERS else -1

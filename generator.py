@@ -22,13 +22,13 @@ class Generator:
         self.board_info: BoardInfo = board_info
 
     def generate(
-        self, pcb_items: PcbItems, pcb_parts: list[PartsItem], mapping
+        self, pcb_items: PcbItems, pcb_parts: list[PartsItem], mapping, seq_file_name, parts_file_name
     ) -> None:
         pcb_parts.build_list(mapping)
-        self.__generate_parts(pcb_parts.Get())
+        self.__generate_parts(pcb_parts.Get(), parts_file_name)
 
         pcb_items.build_list(mapping)
-        self.__generate_seq(pcb_items.Get())
+        self.__generate_seq(pcb_items.Get(), seq_file_name)
 
     #        self.parts.generate()
 
@@ -43,16 +43,32 @@ class Generator:
         point = self.__rotate_pcb_cooordinates(point)
         if bias:
             point = PcbPoint(X=(point.X - self.__bias.X), Y=(point.Y - self.__bias.Y))
-        point = PcbPoint(X=int(point.X * 100), Y=int(point.Y * 100))
+        point = self.__multiply_pcb_coordinates_for_ecm(point.X, point.Y)
         return point
 
+    def __multiply_pcb_coordinates_for_ecm(self, X, Y) -> PcbPoint:
+        point = PcbPoint(X=int(round(X * 100,0)), Y=int(round(Y * 100,0)))
+        return point
+
+
+    def __rotate_pcb_angle(self, angle: float, angle_rotetion: float) -> float:
+#Arotation - значение доворота детали, взятой из фидера, для установки на плату, расположенной так, 
+# что 0:0 - в левом нижнем углу 
+        angle += self.board_info.Rotate + angle_rotetion -90
+        if angle < 0:
+            angle+= 720
+        angle %= 360 
+        return angle
+    
     def __rotate_pcb_cooordinates(self, point: PcbPoint) -> PcbPoint:
         if self.board_info.Rotate == -90:
             point = PcbPoint(Y=point.X, X=self.board_info.Ysize_mm - point.Y)
+        elif self.board_info.Rotate == 90:
+            point = PcbPoint(X=point.Y, Y=self.board_info.Xsize_mm - point.X)
         return point
 
-    def __generate_parts(self, pcb_parts: list[PartsItem]) -> None:
-        with open("part.dat", "wt") as f:
+    def __generate_parts(self, pcb_parts: list[PartsItem], file_name) -> None:
+        with open(file_name, "wt") as f:
             s = []
             # 68:0:0:0:0:6:5.8:0:0:2:1:RQFPIRL120N70
 
@@ -68,10 +84,10 @@ class Generator:
 
             f.writelines("\n".join(s))
 
-    def __generate_seq(self, pcb_assets: PcbAssets) -> None:
+    def __generate_seq(self, pcb_assets: PcbAssets, file_name) -> None:
         self.__set_bias(pcb_assets.Bias)
 
-        with open(self.board_info.Name + ".seq", "wt") as f:
+        with open(file_name, "wt") as f:
             # header
             #  70: 0: 48: 1F 8X 6Y 2A 68R
             # cnt
@@ -94,10 +110,11 @@ class Generator:
                     self.board_info.ChipFeeders,
                 )
             )
-            point = PcbPoint(
-                X=int(self.__bias.X + self.board_info.BiasRefX_mm) * 100,
-                Y=int(self.__bias.Y + self.board_info.BiasRefY_mm) * 100,
+            point = self.__multiply_pcb_coordinates_for_ecm(
+                        self.__bias.X + self.board_info.BiasRefX_mm,
+                        self.__bias.Y + self.board_info.BiasRefY_mm
             )
+
             s.append(" 500: 500: 500: 500:  X {}Y {}AR".format(point.X, point.Y))
 
             for item in pcb_assets.Feducial:
@@ -115,9 +132,10 @@ class Generator:
                 point: PcbPoint = self.__adjust_pcb_coordinates(
                     item.Point, pcb_assets.Bias
                 )
+                angle =  int(self.__rotate_pcb_angle(item.A, item.Arot) * 100)
                 s.append(
-                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:1:{0[H]}:F {0[Fdr]}X {1[X]}Y {1[Y]}A {0[A]}R{0[Remark]}".format(
-                        item._asdict(), point._asdict()
+                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:1:{0[H]}:F {0[Fdr]}X {1[X]}Y {1[Y]}A {2}R{0[Remark]}".format(
+                        item._asdict(), point._asdict(), angle
                     )
                 )
 
