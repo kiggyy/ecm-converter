@@ -71,6 +71,7 @@ if changes_count:
 pcb_parts = PcbParts()
 if mapping.is_resolved():
     gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
+    print("Files generated: {} {}".format(config_seq_file,config_parts_file))
 else:
 #    gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
     print("Mapping is not resolved, exiting")
