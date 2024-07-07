@@ -13,6 +13,8 @@ PcbItemFields = [
     "H",
     "Pt",
     "Nzl",
+    "Xofs",
+    "Yofs",
     "Ind",
     "Strk",
     "DT",
@@ -35,11 +37,11 @@ class PcbItems:
         self.size = PcbPoint(X=0, Y=0)
 
     def __test_and_add_non_value_list_items(self, row, point) -> bool:
-        r = re.match("[ \t]*([A-Za-z_]+)([0-9]+)?", row.Designator)
+        r = re.match("[ \t]*([A-Za-z_]+)([0-9]+)?", row.designator)
         if not r:
             return
-        value = str(row.Value).strip()
-        case = str(row.Case).upper().strip()
+        value = str(row.value).strip()
+        case = str(row.case).upper().strip()
         if case not in ["TH","PCB"]:
             return False
 
@@ -67,16 +69,16 @@ class PcbItems:
     def build_list(self, current_mapping: dict) -> None:
         self.pcb_def = self.pcb_def.reset_index()
         for index, row in self.pcb_def.iterrows():
-            value = row.Value if row.Value == row.Value else ""
+            value = row.value if row.value == row.value else ""
             footprint = (
-                row.Case.upper().strip()
-                if row.Case == row.Case
+                row.case.upper().strip()
+                if row.case == row.case
                 else ""
             )
 
             point = PcbPoint(
-                X=row["Ref-X(mm)"],# if "Ref-X(mm)" in row else row["Center-X(mm)"],
-                Y=row["Ref-Y(mm)"]# if "Ref-Y(mm)" in row else row["Center-Y(mm)"],
+                X=row["ref-x(mm)"],# if "Ref-X(mm)" in row else row["Center-X(mm)"],
+                Y=row["ref-y(mm)"]# if "Ref-Y(mm)" in row else row["Center-Y(mm)"],
             )
             if self.__test_and_add_non_value_list_items(row, point):
                 continue
@@ -90,16 +92,18 @@ class PcbItems:
                 Hd=1,
                 Fdr=mapping["Feeder"],
                 Point=point,
-                A=row.Rotation,
+                A=row.rotation,
                 Arot=mapping["Arot"],
                 Pt=mapping["PartNo"],
                 H=mapping["H"],
                 Nzl=mapping["Nz"],
                 Ind=mapping["FIdx"],
                 Strk=mapping["Strk"],
+                Xofs=float(mapping["Xofs"]),
+                Yofs=float(mapping["Yofs"]),
                 DT="",
                 HA="",
-                Remark="{0[Designator]:<12.12}0.2".format(row),
+                Remark="{0[designator]:<12.12}0.2".format(row),
             )
             self.pcb_items.append(p)
 

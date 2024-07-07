@@ -34,12 +34,12 @@ config_seq_file = os.path.join(project_dir, config_project_name + ".seq")
 config_parts_file = os.path.join(project_dir, "part.dat")
 
 if project_dir:
-    if os.path.sep not in config_mapping_file:
+    if ':' not in config_mapping_file:
         config_mapping_file = os.path.join(project_dir, config_mapping_file)
-    if os.path.sep not in config_import_pcb_file:
+    if ':' not in config_import_pcb_file:
         config_import_pcb_file = os.path.join(project_dir,config_import_pcb_file)
 
-im = ImportPcb()
+im = ImportPcb(config_project_name)
 
 mapping = Mapping(config_mapping_file)
 board_info = BoardInfo(
@@ -69,6 +69,9 @@ changes_count = mapping.merge_mapping(im.imported_mapping)
 if changes_count:
     print("Updating mapping; the old one will be saved as .bak")
     mapping.save_mapping(im.imported_mapping)
+
+mapping.save_mapping(im.imported_mapping)
+
 pcb_parts = PcbParts()
 if mapping.is_resolved():
     gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)

@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 
-FIELD_CASE = "Case"
+FIELD_CASE = "case"
 
 PACKAGE_SIZES_REGEXP = {
     "^#?S(?P<S>[0-9.]+)H(?P<H>[0-9.]+)":"",
@@ -44,34 +44,36 @@ PACKAGE_TO_ECM_TYPE = {
 
 
 class ImportPcb:
-    def __init__(self) -> None:
-        pass
-
+    def __init__(self, project_name) -> None:
+        self.project_name = project_name
+    
     def read_input(self, csv_file) -> None:
         # self.pcb_items = pd.read_excel('Pick Place for UMTP04(12)PWR(Actual).xlsx')
         with open(csv_file, "rt") as f:
             row = 0
             for l in f:
-                if l.strip():
+                line = l.strip().lower()
+                if line:
                     row += 1
-                if FIELD_CASE in l:
+                if FIELD_CASE in line:
                     break
 
         self.pcb_items = pd.read_csv(
             csv_file, header=row - 1, encoding="cp1251", encoding_errors="replace"
         )
+        self.pcb_items.columns = self.pcb_items.columns.str.lower()
         #        self.pcb_items.insert(3, 'Prefix', '')
-        self.pcb_items.insert(3, "Type", "")
+        self.pcb_items.insert(3, "type", "")
         #        self.pcb_items['Case/Package'] = self.pcb_items.apply( lambda x: x['Case/Package'] if x['Case/Package'] else "none", axis=1)
         #        self.pcb_items.Prefix = self.pcb_items.apply( lambda x:self.__get_component_type(x.Designator,x['Case/Package'])['P'], axis=1)
-        self.pcb_items.Type = self.pcb_items.apply(
+        self.pcb_items.type = self.pcb_items.apply(
             lambda x: self.__get_component_type(x), axis=1
         )
 
     #        self.pcb_items.Value = self.pcb_items.apply( lambda x: x.Value if x.Value else x.Description, axis=1)
 
     def generate_imported_values_mapping(self) -> None:
-        values = self.pcb_items.groupby(["Value", FIELD_CASE], dropna=False)
+        values = self.pcb_items.groupby(["value", FIELD_CASE], dropna=False)
         self.imported_mapping = {}
         index = 0
         for v in values:
@@ -80,13 +82,13 @@ class ImportPcb:
             if footprint in ["TH", "PCB", "FEDUCIAL", "REFERENCE"]:
                 continue
             key = value + "#:#" + footprint
-            designators = (
-                str(v[1].Designator.count()) + ": "
-                if v[1].Designator.count() > 1
+            designators = self.project_name.upper() + ': ' + (
+                str(v[1].designator.count()) + ": "
+                if v[1].designator.count() > 1
                 else ""
             )
-            designators += ", ".join(v[1].Designator)
-            t = v[1].Type.array[0]
+            designators += ", ".join(v[1].designator)
+            t = v[1].type.array[0]
             index += 1
             p = {}
             p["Feeder"] = ""
@@ -100,8 +102,9 @@ class ImportPcb:
             p["W"] = 0
             p["Afed"] = 0
             p["Arot"] = t["Arot"] if "Arot" in t else ""
+            p["Xofs"] = 0
+            p["Yofs"] = 0
             p["Designators"] = designators
-            p["DesignatorsCount"] = v[1].Designator.count()
             p["row"] = 0
             p["PartNo"] = index
             p["Nz"] = t["Nz"] if "Nz" in t else ""
@@ -122,7 +125,7 @@ class ImportPcb:
         # Under +++ of remark, if numeric value exists then the tape will be advanced during the nozzle
         # is in down position and wait specified time (1/100 sec) and picks up a component. This feature
         # is useful to pick up very tiny component such as 0201
-        footprint = row.Case
+        footprint = row[FIELD_CASE]
         #        description = row.Footprint
         #        description_items = description.split('/')
 
