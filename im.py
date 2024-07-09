@@ -12,8 +12,12 @@ project_file = sys.argv[-1]
 project_dir, project_file_name_ext = os.path.split(project_file)
 project_file_name, project_file_ext = os.path.splitext(project_file_name_ext)
 
-with open(project_file) as f:
-    config = yaml.safe_load(f)
+try:
+    with open(project_file) as f:
+        config = yaml.safe_load(f)
+except Exception as err:
+    print("CAN't open project file {}: {}\nExiting!".format(project_file, err))
+    exit(101)
 
 config_project_name = (
     project_file_name if "project_name" not in config else config["project_name"]
@@ -69,8 +73,6 @@ changes_count = mapping.merge_mapping(im.imported_mapping)
 if changes_count:
     print("Updating mapping; the old one will be saved as .bak")
     mapping.save_mapping(im.imported_mapping)
-
-mapping.save_mapping(im.imported_mapping)
 
 pcb_parts = PcbParts()
 if mapping.is_resolved():
