@@ -14,6 +14,8 @@ BoardInfoFields = [
     "BiasRefY_mm",
     "BiasCorrX_mm",
     "BiasCorrY_mm",
+    "Dumping_Xmm",
+    "Dumping_Ymm"
 ]
 BoardInfo = namedtuple("BoardInfo", BoardInfoFields)
 
@@ -54,7 +56,7 @@ class Generator:
         return point
 
     def __multiply_pcb_coordinates_for_ecm(self, X, Y) -> PcbPoint:
-        point = PcbPoint(X=int(round(X * 100,0)), Y=int(round(Y * 100,0)))
+        point = PcbPoint(X=self.__toecm_100(X), Y=self.__toecm_100(Y))
         return point
 
     def __adjust_mount_point(self, point: PcbPoint, x_ofs:float, y_ofs:float, angle:float) -> PcbPoint:
@@ -104,6 +106,9 @@ class Generator:
 
             f.writelines("\n".join(s))
 
+    def __toecm_100(self, value) -> int:
+        return int(round(value * 100,0))
+    
     def __generate_seq(self, pcb_assets: PcbAssets, file_name) -> None:
         self.__set_size(pcb_assets.Size) # order of these calls is important!
         self.__set_bias(pcb_assets.Bias)
@@ -125,7 +130,7 @@ class Generator:
             s = []
             s.append(
                 " {}: {}: 48: {}F {}X 6Y 2A 68R".format(
-                    len(pcb_assets.Items),
+                    len(pcb_assets.Items) + len(pcb_assets.Feducial),
                     0,
                     self.board_info.GridTrays,
                     self.board_info.ChipFeeders,
@@ -136,7 +141,10 @@ class Generator:
                         self.__bias.Y + self.board_info.BiasRefY_mm
             )
 
-            s.append(" 500: 500: 500: 500:  X {}Y {}AR".format(point.X, point.Y))
+            s.append(" {}: {}: 500: 500:  X {}Y {}AR".format(
+                self. __toecm_100(self.board_info.Dumping_Xmm), 
+                self. __toecm_100(self.board_info.Dumping_Ymm), 
+                point.X, point.Y))
 
             for item in pcb_assets.Feducial:
                 # 1:::::1::F 271X 306Y 12969A 0RRep.1
@@ -150,14 +158,21 @@ class Generator:
                 )
 
             for item in pcb_assets.Items:
+                if item.Fdr >= 999:
+                    feeder = 48
+                    ignore = '*'
+                else:
+                    feeder = item.Fdr
+                    ignore = ''
+                
                 point = self.__adjust_pcb_coordinates(
                     self.__adjust_mount_point(item.Point, item.Xofs, item.Yofs, item.A),
                     pcb_assets.Bias
                 )
-                angle =  int(self.__rotate_pcb_angle(item.A, item.Arot) * 100)
+                angle = self. __toecm_100(self.__rotate_pcb_angle(item.A, item.Arot))
                 s.append(
-                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:1:{0[H]}:F {0[Fdr]}X {1[X]}Y {1[Y]}A {2}R{0[Remark]}".format(
-                        item._asdict(), point._asdict(), angle
+                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:{3}1:{0[H]}:F {4}X {1[X]}Y {1[Y]}A {2}R{0[Remark]}".format(
+                        item._asdict(), point._asdict(), angle, ignore, feeder
                     )
                 )
 

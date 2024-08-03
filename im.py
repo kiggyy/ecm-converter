@@ -61,6 +61,8 @@ board_info = BoardInfo(
     if "board_bias_correction_y_mm" in config
     else 0,
     Name=config_project_name,
+    Dumping_Xmm = config["board_dumping_x_mm"],
+    Dumping_Ymm = config["board_dumping_y_mm"]
 )
 
 gen = Generator(board_info)
