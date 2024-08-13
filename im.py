@@ -6,6 +6,7 @@ from mapping import Mapping
 from generator import Generator, BoardInfo
 from pcb_items import PcbItems
 from pcb_parts import PcbParts
+from bcolors import bcolors
 
 project_file = sys.argv[-1]
 project_dir, project_file_name_ext = os.path.split(project_file)
@@ -15,7 +16,8 @@ try:
     with open(project_file) as f:
         config = yaml.safe_load(f)
 except Exception as err:
-    print("CAN't open project file {}: {}\nExiting!".format(project_file, err))
+    print("\n{}CAN't open project file {}: {}\n{}Exiting!".
+          format(bcolors.FAIL, project_file, bcolors.ENDC, err))
     exit(101)
 
 config_project_name = (
@@ -72,7 +74,7 @@ im.generate_imported_values_mapping()
 pcb_items = PcbItems(im.pcb_items)
 changes_count = mapping.merge_mapping(im.imported_mapping)
 if changes_count:
-    print("Updating mapping; the old one will be saved as .bak")
+    print(bcolors.WARNING+"Updating mapping"+bcolors.ENDC+"; the old one will be saved as .bak")
     mapping.save_mapping(im.imported_mapping)
 
 pcb_parts = PcbParts()
@@ -80,7 +82,7 @@ if mapping.is_resolved():
     gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
     print("Files generated: {} {}".format(config_seq_file,config_parts_file))
 else:
-    print("ERROR: Mapping IS NOT resolved, exiting")
+    print("\n" + bcolors.FAIL + "ERROR: Mapping IS NOT resolved, exiting" + bcolors.ENDC)
 
 
 #  sheet.cell(row=row,column=headers.index("Package")+1).number_format = '@'
