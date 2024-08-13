@@ -1,7 +1,6 @@
 import yaml
 import sys
 import os
-from parts import Parts
 from import_pcb import ImportPcb
 from mapping import Mapping
 from generator import Generator, BoardInfo
@@ -24,7 +23,7 @@ config_project_name = (
 )
 config_mapping_file = (
     config_project_name + "-mapping.xlsx"
-if "mapping_file" not in config
+    if "mapping_file" not in config
     else config["mapping_file"]
 )
     
