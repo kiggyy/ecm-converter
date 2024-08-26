@@ -2,6 +2,7 @@ import os
 import shutil
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment
+from bcolors import bcolors
 
 FLOAT_FORMAT = "F"
 INT_FORMAT = "I"
@@ -91,13 +92,16 @@ class Mapping:
             if row[index].value == value:
                 return idx
         return 0
+    
+    def check_repeat_feeder() -> bool:
+        pass
 
     def merge_mapping(self, pcb_new_mapping) -> int:
         if self.__is_new:
             self.changes_count = -1
             return self.changes_count
         self.changes_count = 0
-
+        used_feeders = []
         self.__is_resolved = True
         current_mapping_values = self.current_mapping_values.copy()
         for key, p in pcb_new_mapping.items():
@@ -118,12 +122,21 @@ class Mapping:
                            p[i] = ""
                         else: 
                             self.__is_resolved = False
-                            print(
+                            bcolors.color_print_warning(
                                 "Row {}: part {}/{} has zero attribute {}".format(
                                     row_no, val, p["Footprint"], i
                                 )
                             )
 
+                # check feeder
+                feeder = p["Feeder"]
+                if feeder not in used_feeders:
+                    used_feeders.append(feeder)
+                else:
+                    if feeder < 999:
+                        bcolors.color_print_warning("Feeder {} used multiple times".format(feeder))
+                        self.__is_resolved = False
+                    
                 #update designators
                 col = self.__get_column_by_name("Designators") - 1
                 

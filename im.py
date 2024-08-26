@@ -7,7 +7,6 @@ from generator import Generator, BoardInfo
 from pcb_items import PcbItems
 from pcb_parts import PcbParts
 from bcolors import bcolors
-
 project_file = sys.argv[-1]
 project_dir, project_file_name_ext = os.path.split(project_file)
 project_file_name, project_file_ext = os.path.splitext(project_file_name_ext)
@@ -16,8 +15,8 @@ try:
     with open(project_file) as f:
         config = yaml.safe_load(f)
 except Exception as err:
-    print("\n{}CAN't open project file {}: {}\n{}Exiting!".
-          format(bcolors.FAIL, project_file, bcolors.ENDC, err))
+    bcolors.color_print_error("CAN't open project file {}: {}".format(project_file, err))
+    bcolors.color_print_error("Exiting")
     exit(101)
 
 config_project_name = (
@@ -68,13 +67,12 @@ board_info = BoardInfo(
 
 gen = Generator(board_info)
 
-# im.read_input('UMTP04(11)ACT (2).csv')
 im.read_input(config_import_pcb_file)
 im.generate_imported_values_mapping()
 pcb_items = PcbItems(im.pcb_items)
 changes_count = mapping.merge_mapping(im.imported_mapping)
 if changes_count:
-    print(bcolors.WARNING+"Updating mapping"+bcolors.ENDC+"; the old one will be saved as .bak")
+    bcolors.color_print(bcolors.WARNING+"Updating mapping"+bcolors.ENDC+"; the old one will be saved as .bak")
     mapping.save_mapping(im.imported_mapping)
 
 pcb_parts = PcbParts()
@@ -82,7 +80,7 @@ if mapping.is_resolved():
     gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
     print("Files generated: {} {}".format(config_seq_file,config_parts_file))
 else:
-    print("\n" + bcolors.FAIL + "ERROR: Mapping IS NOT resolved, exiting" + bcolors.ENDC)
+    bcolors.color_print_error("ERROR: Mapping IS NOT resolved, exiting")
 
 
 #  sheet.cell(row=row,column=headers.index("Package")+1).number_format = '@'
