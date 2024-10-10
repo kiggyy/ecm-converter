@@ -157,7 +157,9 @@ class Generator:
                     )
                 )
 
-            for item in pcb_assets.Items:
+            items = sorted(pcb_assets.Items, key = lambda k: k.Nzl * 10000 + k.Fdr)
+
+            for item in items:
                 if item.Fdr >= 999:
                     feeder = 48
                     ignore = '*'
