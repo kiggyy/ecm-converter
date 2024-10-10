@@ -133,7 +133,7 @@ class Mapping:
                 if feeder not in used_feeders:
                     used_feeders.append(feeder)
                 else:
-                    if feeder < 999:
+                    if feeder and feeder < 999 :
                         bcolors.color_print_warning("Feeder {} used multiple times".format(feeder))
                         self.__is_resolved = False
                     
@@ -147,6 +147,7 @@ class Mapping:
                     if project_designators.upper().startswith(project_name):
                         is_found = True
                         if p["Designators"] != project_designators:
+                            designators_projects[designators_projects.index(project_designators)] = p["Designators"]
                             self.changes_count += 1
                             print(
                                 "Row {}: part {}/{} changed {}: {} -> {}".format(
