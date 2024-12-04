@@ -93,17 +93,48 @@ class Mapping:
                 return idx
         return 0
     
+    def find_or_insert_designator_column(self, name):
+        toinsert_col = 0
+        name = '@' + name
+        row = next(iter(self.sheet.rows))
+        for cell in row:
+            if cell.value is None:
+                break
+            if cell.value.lower() == name.lower():
+                return cell.col_idx
+            if cell.value.startswith('@'):
+                toinsert_col = cell.col_idx if toinsert_col == 0 else toinsert_col
+
+        toinsert_col = toinsert_col if toinsert_col != 0  \
+                       else self.__get_column_by_name("Designators")
+
+        self.sheet.insert_cols(toinsert_col)
+        row = next(iter(self.sheet.rows))
+        row[toinsert_col-1].value = name
+        self.sheet.column_dimensions[row[toinsert_col-1].column_letter].width = 15
+        self.__prepare_current_column_layout()
+        self.changes_count += 1
+        self.workbook.save(filename="tests/inter.xlsx")
+        print("New column {}".format(name))
+        return toinsert_col
+    
     def check_repeat_feeder() -> bool:
         pass
 
     def merge_mapping(self, pcb_new_mapping) -> int:
-        if self.__is_new:
+        if self.__is_new or len(pcb_new_mapping.keys()) == 0:
             self.changes_count = -1
             return self.changes_count
         self.changes_count = 0
         used_feeders = []
         self.__is_resolved = True
         current_mapping_values = self.current_mapping_values.copy()
+        designators = next(iter(pcb_new_mapping.values()))["Designators"]
+        project_name = designators.split(': ')[0]
+#        designators_count = len(designators.split(','))
+#        project_designators_col = 
+        self.find_or_insert_designator_column(project_name)
+
         for key, p in pcb_new_mapping.items():
             val = p["Value"]
             if val != val:
@@ -141,7 +172,11 @@ class Mapping:
                 col = self.__get_column_by_name("Designators") - 1
                 
                 designators_projects = [] if row[col].value is None else row[col].value.split("\n")
-                project_name = p["Designators"].split(': ')[0] + ': '
+                designators_count = len(p["Designators"].split(','))
+                project_name = p["Designators"].split(': ')[0]
+                p["@"+project_name] = str(designators_count)
+                project_name += ': '
+                
                 is_found = False
                 for project_designators in designators_projects:
                     if project_designators.upper().startswith(project_name):
@@ -202,6 +237,10 @@ class Mapping:
                     cell.value = p[k]
                     if k == "Designators":
                         cell.alignment = Alignment(wrapText=True)
+                    if k.startswith("@"):
+                        cell.value = int(p[k])
+                        continue
+                        
                     if p[k] and "format" in MAPPING_COLUMNS[k]:
                         format = MAPPING_COLUMNS[k]["format"]
                         if format == FLOAT_FORMAT:
