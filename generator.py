@@ -94,7 +94,7 @@ class Generator:
             s = []
             # 68:0:0:0:0:6:5.8:0:0:2:1:RQFPIRL120N70
 
-            s.append("{}:0:0:0:0:0:0:0:0:0:0:R".format(len(pcb_parts)))
+            s.append("{}:0:0:0:0:0:0:0:0:0:0:R".format(len(pcb_parts)+1))
 
             for item in pcb_parts:
                 # 2:0:0:1:0:3.5:1.8:0:0:0.7:1:RQFPCHI1C1 70
@@ -105,6 +105,7 @@ class Generator:
                 )
 
             f.writelines("\n".join(s))
+            f.writelines("\n")
 
     def __toecm_100(self, value) -> int:
         return int(round(value * 100,0))
