@@ -9,16 +9,29 @@ from pcb_parts import PcbParts
 from bcolors import bcolors
 project_file = sys.argv[-1]
 project_dir, project_file_name_ext = os.path.split(project_file)
+upper_dir = os.path.abspath(os.path.join(project_dir, '..'))
 project_file_name, project_file_ext = os.path.splitext(project_file_name_ext)
 
-try:
-    with open(project_file) as f:
-        config = yaml.safe_load(f)
-except Exception as err:
-    bcolors.color_print_error("CAN't open project file {}: {}".format(project_file, err))
-    bcolors.color_print_error("Exiting")
-    exit(101)
+def read_config(file_name):
+    try:
+        with open(file_name) as f:
+            return yaml.safe_load(f)
+    except Exception as err:
+        bcolors.color_print_error("CAN't open project file {}: {}".format(file_name, err))
+        bcolors.color_print_error("Exiting")
+        exit(101)
 
+config = read_config(project_file)
+if "common" in config:
+    common_config_file = config["common"].strip()
+    if common_config_file.lower() == 'up':
+        common_config_file = upper_dir + "/common.yaml"
+    config_common = read_config(common_config_file)
+    if "mapping_file" in config_common:
+        config_common["mapping_file"] = os.path.join(upper_dir, config_common["mapping_file"])
+                                         
+    config = config_common | config
+    
 config_project_name = (
     project_file_name if "project_name" not in config else config["project_name"]
 )
