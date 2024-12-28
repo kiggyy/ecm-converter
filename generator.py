@@ -15,7 +15,13 @@ BoardInfoFields = [
     "BiasCorrX_mm",
     "BiasCorrY_mm",
     "Dumping_Xmm",
-    "Dumping_Ymm"
+    "Dumping_Ymm",
+    "CorrRep1_Xmm",
+    "CorrRep1_Ymm",
+    "CorrRep2_Xmm",
+    "CorrRep2_Ymm",
+    "CorrRep_Xcoeff",
+    "CorrRep_Ycoeff"
 ]
 BoardInfo = namedtuple("BoardInfo", BoardInfoFields)
 
@@ -23,6 +29,7 @@ BoardInfo = namedtuple("BoardInfo", BoardInfoFields)
 class Generator:
     def __init__(self, board_info: BoardInfo) -> None:
         self.board_info: BoardInfo = board_info
+        self.corr = PcbPoint(1,1)
 
     def generate(
         self, pcb_items: PcbItems, pcb_parts: list[PartsItem], mapping, seq_file_name, parts_file_name
@@ -42,6 +49,33 @@ class Generator:
         )
         self.__bias = self.__rotate_pcb_cooordinates(bias)
 
+    def __apply_scale(self, feducals : list, board_info : BoardInfo) -> PcbPoint:
+
+        if board_info.CorrRep_Xcoeff and board_info.CorrRep_Ycoeff:
+            return PcbPoint(board_info.CorrRep_Xcoeff, board_info.CorrRep_Ycoeff)
+        
+        rep1_org = None
+        rep2_org = None
+        for p in feducals:
+            if p.No == 1:
+               rep1_org = p.Point
+            elif p.No == 2:
+               rep2_org = p.Point
+        
+        rep1_corr = PcbPoint(board_info.CorrRep1_Xmm, board_info.CorrRep1_Ymm)
+        rep2_corr = PcbPoint(board_info.CorrRep2_Xmm, board_info.CorrRep2_Ymm)
+
+        if rep1_org is None or rep2_org is None:
+            return PcbPoint(1,1)
+        
+        corr  = PcbPoint(
+            ((rep1_org.X + rep1_corr.X) - (rep2_org.X + rep2_corr.X)) /
+              (rep1_org.X - rep2_org.X),
+                 ((rep1_org.Y + rep1_corr.Y) - (rep2_org.Y + rep2_corr.Y)) /
+              (rep1_org.Y - rep2_org.Y))
+        return corr
+         
+        
     def __set_size(self, size: PcbPoint) -> None:
         self.__size = PcbPoint(
             X=self.board_info.Xsize_mm if self.board_info.Xsize_mm !=0 else size.X,
@@ -52,6 +86,7 @@ class Generator:
         point = self.__rotate_pcb_cooordinates(point)
         if bias:
             point = PcbPoint(X=(point.X - self.__bias.X), Y=(point.Y - self.__bias.Y))
+        point = PcbPoint( point.X * self.corr.X, point.Y * self.corr.Y )
         point = self.__multiply_pcb_coordinates_for_ecm(point.X, point.Y)
         return point
 
@@ -146,6 +181,8 @@ class Generator:
                 self. __toecm_100(self.board_info.Dumping_Xmm), 
                 self. __toecm_100(self.board_info.Dumping_Ymm), 
                 point.X, point.Y))
+
+            self.corr = self.__apply_scale(pcb_assets.Feducial, self.board_info)
 
             for item in pcb_assets.Feducial:
                 # 1:::::1::F 271X 306Y 12969A 0RRep.1

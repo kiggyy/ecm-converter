@@ -62,7 +62,7 @@ mapping = Mapping(config_mapping_file)
 board_info = BoardInfo(
     GridTrays=config["grid_trays"],
     ChipFeeders=config["chip_feeders"],
-    Rotate=config["board_rotate"],
+    Rotate=config["board_rotate"] if "board_rotate" in config else 0,
     Xsize_mm=config["board_xsize_mm"] if "board_xsize_mm" in config else 0,
     Ysize_mm=config["board_ysize_mm"] if "board_ysize_mm" in config else 0,
     BiasRefX_mm=config["board_bias_ref_x_mm"],
@@ -75,7 +75,14 @@ board_info = BoardInfo(
     else 0,
     Name=config_project_name,
     Dumping_Xmm = config["board_dumping_x_mm"],
-    Dumping_Ymm = config["board_dumping_y_mm"]
+    Dumping_Ymm = config["board_dumping_y_mm"],
+    CorrRep1_Xmm = config["corr_rep1_x"] if "corr_rep1_x" in config else 0,
+    CorrRep1_Ymm = config["corr_rep1_y"] if "corr_rep1_y" in config else 0,
+    CorrRep2_Xmm = config["corr_rep2_x"] if "corr_rep2_x" in config else 0,
+    CorrRep2_Ymm = config["corr_rep2_y"] if "corr_rep2_y" in config else 0,
+    CorrRep_Xcoeff = config["coef_rep_x"] if "coef_rep_x" in config else 0,
+    CorrRep_Ycoeff = config["coef_rep_y"] if "coef_rep_y" in config else 0
+
 )
 
 gen = Generator(board_info)
