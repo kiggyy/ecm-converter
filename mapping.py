@@ -114,7 +114,7 @@ class Mapping:
         self.sheet.column_dimensions[row[toinsert_col-1].column_letter].width = 15
         self.__prepare_current_column_layout()
         self.changes_count += 1
-        self.workbook.save(filename="tests/inter.xlsx")
+#        self.workbook.save(filename="tests/inter.xlsx")
         print("New column {}".format(name))
         return toinsert_col
     
