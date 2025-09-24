@@ -23,6 +23,7 @@ PACKAGE_SIZES = {
     "C1210": "3.2x2.5x0.5/Nz=2",
     "R1218": "3.2x4.6x0.5/Nz=2",
     "C1218": "3.2x4.6x0.5/Nz=2",
+    "C1808": "6.1x2.7x2.7/Nz=2",
     "R2010": "5.0x2.5x0.5/Nz=2",
     "C2010": "5.0x2.5x0.5/Nz=2",
     "R2512": "6.3x3.2x0.5/Nz=2",
@@ -115,7 +116,7 @@ class ImportPcb:
             p["PartNo"] = index
             p["Nz"] = t["Nz"] if "Nz" in t else ""
             p["FIdx"] = 1
-            p["Strk"] = 310
+            p["Strk"] = 320
             p["PartRemarkTS"] = 70
             p["PartRemark3P"] = ""
 

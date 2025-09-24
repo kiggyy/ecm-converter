@@ -24,6 +24,7 @@ MAPPING_COLUMNS = {
     "Xofs": {"size":5, "format" : FLOAT_FORMAT},
     "Yofs": {"size":5, "format" : FLOAT_FORMAT},
     "Afed": {"size":4, "format" : INT_FORMAT},
+    "PnP": {"size":1},
     "Strk": {"size":4, "format" : INT_FORMAT},
     "FIdx": {"size":4, "format" : INT_FORMAT},
     "Designators": {"size":50},
@@ -126,7 +127,7 @@ class Mapping:
             self.changes_count = -1
             return self.changes_count
         self.changes_count = 0
-        used_feeders = []
+        used_feeders = {}
         self.__is_resolved = True
         current_mapping_values = self.current_mapping_values.copy()
         designators = next(iter(pcb_new_mapping.values()))["Designators"]
@@ -161,8 +162,11 @@ class Mapping:
 
                 # check feeder
                 feeder = p["Feeder"]
-                if feeder not in used_feeders:
-                    used_feeders.append(feeder)
+                p_n_p = str(p["PnP"])
+                if p_n_p not in used_feeders:
+                    used_feeders[p_n_p]=[]
+                if feeder not in used_feeders[p_n_p]:
+                    used_feeders[p_n_p].append(feeder)
                 else:
                     if feeder and feeder < 999 :
                         bcolors.color_print_warning("Feeder {} used multiple times".format(feeder))

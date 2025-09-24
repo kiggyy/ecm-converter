@@ -26,7 +26,7 @@ BoardInfoFields = [
 BoardInfo = namedtuple("BoardInfo", BoardInfoFields)
 
 
-class Generator:
+class GeneratorECM:
     def __init__(self, board_info: BoardInfo) -> None:
         self.board_info: BoardInfo = board_info
         self.corr = PcbPoint(1,1)
@@ -37,7 +37,7 @@ class Generator:
         pcb_parts.build_list(mapping)
         self.__generate_parts(pcb_parts.Get(), parts_file_name)
 
-        pcb_items.build_list(mapping)
+        pcb_items.build_list(mapping, "ecm")
         self.__generate_seq(pcb_items.Get(), seq_file_name)
 
     #        self.parts.generate()

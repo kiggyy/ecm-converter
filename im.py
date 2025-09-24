@@ -3,7 +3,8 @@ import sys
 import os
 from import_pcb import ImportPcb
 from mapping import Mapping
-from generator import Generator, BoardInfo
+from generator_ecm import GeneratorECM, BoardInfo
+from generator_zb import GeneratorZB
 from pcb_items import PcbItems
 from pcb_parts import PcbParts
 from bcolors import bcolors
@@ -48,6 +49,7 @@ config_import_pcb_file = (
 )
 
 config_seq_file = os.path.join(project_dir, config_project_name + ".seq")
+config_zb_csv_file = os.path.join(project_dir, config_project_name + "_zb.csv")
 config_parts_file = os.path.join(project_dir, "part.dat")
 
 if project_dir:
@@ -85,7 +87,8 @@ board_info = BoardInfo(
 
 )
 
-gen = Generator(board_info)
+gen_ecm = GeneratorECM(board_info)
+gen_zb = GeneratorZB(board_info)
 
 im.read_input(config_import_pcb_file)
 im.generate_imported_values_mapping()
@@ -97,7 +100,8 @@ if changes_count:
 
 pcb_parts = PcbParts()
 if mapping.is_resolved():
-    gen.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
+    gen_ecm.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
+    gen_zb.generate(pcb_items, pcb_parts, im.imported_mapping, config_zb_csv_file, config_parts_file)
     print("Files generated: {} {}".format(config_seq_file,config_parts_file))
 else:
     bcolors.color_print_error("ERROR: Mapping IS NOT resolved, exiting")

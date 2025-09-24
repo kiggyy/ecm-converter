@@ -26,6 +26,7 @@ class PcbParts:
         return self.parts_items
 
     def build_list(self, current_mapping: dict) -> None:
+        self.parts_items = []
         for index, row in current_mapping.items():
             mapping = row
             p = PartsItem(

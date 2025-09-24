@@ -3,8 +3,12 @@ import sys
 import re
 import pandas as pd
 from collections import namedtuple
+from bcolors import bcolors
 
 PcbItemFields = [
+    "Value",
+    "Designator",
+    "Footprint",
     "Hd",
     "Fdr",
     "Point",
@@ -66,7 +70,10 @@ class PcbItems:
 
         return False
 
-    def build_list(self, current_mapping: dict) -> None:
+    def build_list(self, current_mapping: dict, filter:str) -> None:
+        self.pcb_items = []
+        self.pcb_feducial = []
+        
         self.pcb_def = self.pcb_def.reset_index()
         for index, row in self.pcb_def.iterrows():
             value = row.value if row.value == row.value else ""
@@ -88,7 +95,16 @@ class PcbItems:
             key = value + "#:#" + footprint
 
             mapping = current_mapping[key]
+            p_n_p = str(mapping["PnP"]).lower()
+            if p_n_p not in ("zb","ecm","any","?") :
+                bcolors.color_print_warning("WARNING: {} - PnP type udefined {}".format(value, p_n_p) )
+
+            if p_n_p != filter and p_n_p != "any" :
+                continue
             p = PcbItem(
+                Value = row["value"],
+                Designator = row["designator"],
+                Footprint = row["footprint"],
                 Hd=1,
                 Fdr=mapping["Feeder"],
                 Point=point,
