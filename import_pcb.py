@@ -37,12 +37,13 @@ PACKAGE_SIZES = {
     "LQFP48"    : "7x7/Nz=2",
     "TSSOP16"   : "4.9x4.4x1.2/Nz=6",
     "SO8W"      : "6.9x5.4x1.8/Nz=6",
+    "SO8"       : "5x5x1.8/Nz=3",
+    "SO16"      : "10.3x5x2.1/Nz=3",
     "QFN32"     : "5.1x5.1x0.9/Nz=6",
     "Q2016"     : "2x1.6x0.8/Nz=2",
-    "SMC"       : "6x5.5x2.2/Nz=6"
-
+    "SMC"       : "6x5.5x2.2/Nz=6",
+    "SMA"       : "4.3x2.5x2.2/Nz=3",
 }
-#    "SMA": "3.56x2.92",
 
 PACKAGE_TO_ECM_TYPE = {
     "^SO": "SOP",
@@ -64,6 +65,8 @@ class ImportPcb:
                     row += 1
                 if FIELD_CASE in line:
                     break
+                if row > 20:
+                    raise Exception("Can't find header row in PCB file")
 
         self.pcb_items = pd.read_csv(
             csv_file, header=row - 1, encoding="cp1251", encoding_errors="replace"

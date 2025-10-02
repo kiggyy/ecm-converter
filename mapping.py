@@ -140,6 +140,10 @@ class Mapping:
             val = p["Value"]
             if val != val:
                 continue
+
+            designators_count = len(p["Designators"].split(','))
+            p["@"+project_name] = str(designators_count)
+
             row_no = self.current_mapping_values.get(key, 0)
             if row_no:
                 row = self.sheet[row_no]
@@ -176,14 +180,19 @@ class Mapping:
                 col = self.__get_column_by_name("Designators") - 1
                 
                 designators_projects = [] if row[col].value is None else row[col].value.split("\n")
-                designators_count = len(p["Designators"].split(','))
-                project_name = p["Designators"].split(': ')[0]
-                p["@"+project_name] = str(designators_count)
-                project_name += ': '
-                
+#                project_name = p["Designators"].split(': ')[0]
+#                project_name += ': '
+                dc = self.__get_column_by_name("@"+project_name)
+                if dc >= 0:
+                    col = dc - 1
+                    if row[col].value != designators_count:
+                        row[col].value = designators_count
+                        self.changes_count += 1
+                        print("Row {}: part {}/{} designators count changed: {}".format(row_no, val, p["@"+project_name], str(designators_count)))
+                    
                 is_found = False
                 for project_designators in designators_projects:
-                    if project_designators.upper().startswith(project_name):
+                    if project_designators.upper().startswith(project_name + ': '):
                         is_found = True
                         if p["Designators"] != project_designators:
                             designators_projects[designators_projects.index(project_designators)] = p["Designators"]
@@ -253,7 +262,6 @@ class Mapping:
                             cell.value = int(p[k])
                         #cell.number_format = MAPPING_COLUMNS[k]["format"]
 
-            row += 1
         if not self.__is_new:
             shutil.copy(self.mapping_file, self.mapping_file + ".bak")
         try:

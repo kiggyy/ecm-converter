@@ -72,6 +72,16 @@
             ]
         },
         {
+            "name": "NOVA10CPU",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "im.py",
+            "console": "integratedTerminal",
+            "args": [
+                "D:/Archive/yandexdisk/ecm/NOVA10CPU/NOVA10CPU.yaml"
+            ]
+        },
+        {
             "name": "T-COMMS",
             "type": "debugpy",
             "request": "launch",
