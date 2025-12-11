@@ -45,8 +45,8 @@ class PcbParts:
                 # Under +++ of remark, if numeric value exists then the tape will be advanced during the nozzle
                 # is in down position and wait specified time (1/100 sec) and picks up a component. This feature
                 # is useful to pick up very tiny component such as 0201.
-                Remark="{0[PartRemark]:<10.10}{0[PartRemarkTS]:<3d}{0[PartRemark3P]:<3}".format(
-                    mapping
+                Remark=("{0[PartRemark]:<10.10}{0[PartRemarkTS]:<3d}{0[PartRemark3P]:<3}".format(
+                    mapping) if mapping["PartRemark"] is not None else ''
                 ),
             )
             self.parts_items.append(p)

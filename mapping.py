@@ -122,6 +122,12 @@ class Mapping:
     def check_repeat_feeder() -> bool:
         pass
 
+    def is_part_mounted(self, details) -> bool:    
+        feeder = details.get("Feeder", "")
+        if feeder > 900:
+            return False
+        return True
+
     def merge_mapping(self, pcb_new_mapping) -> int:
         if self.__is_new or len(pcb_new_mapping.keys()) == 0:
             self.changes_count = -1
@@ -156,7 +162,7 @@ class Mapping:
                     if p[i] is None:
                         if  i in ["Afed", "PartRemark3P"]: #TODO: afed must be initeger
                            p[i] = ""
-                        else: 
+                        elif self.is_part_mounted(p): 
                             self.__is_resolved = False
                             bcolors.color_print_warning(
                                 "Row {}: part {}/{} has zero attribute {}".format(
@@ -250,7 +256,7 @@ class Mapping:
                     cell.value = p[k]
                     if k == "Designators":
                         cell.alignment = Alignment(wrapText=True)
-                    if k.startswith("@"):
+                    if k.startswith("@"): #TODO Clean line
                         cell.value = int(p[k])
                         continue
                         

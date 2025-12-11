@@ -82,6 +82,26 @@
             ]
         },
         {
+            "name": "PhaseDetector",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "im.py",
+            "console": "integratedTerminal",
+            "args": [
+                "D:/Archive/yandexdisk/ecm/PhaseDetector/PhaseDetector.yaml"
+            ]
+        },
+        {
+            "name": "Injector",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "im.py",
+            "console": "integratedTerminal",
+            "args": [
+                "D:/Archive/yandexdisk/ecm/Injector/Injector.yaml"
+            ]
+        },
+        {
             "name": "T-COMMS",
             "type": "debugpy",
             "request": "launch",

@@ -96,7 +96,7 @@ class PcbItems:
 
             mapping = current_mapping[key]
             p_n_p = str(mapping["PnP"]).lower()
-            if p_n_p not in ("zb","ecm","any","?") :
+            if p_n_p not in ("zb","ecm","any","?") and mapping['Feeder'] <= 900:
                 bcolors.color_print_warning("WARNING: {} - PnP type udefined {}".format(value, p_n_p) )
 
             if p_n_p != filter and p_n_p != "any" :
