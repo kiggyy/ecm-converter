@@ -60,11 +60,12 @@ if project_dir:
 
 im = ImportPcb(config_project_name)
 
-mapping = Mapping(config_mapping_file)
 board_info = BoardInfo(
     GridTrays=config["grid_trays"],
     ChipFeeders=config["chip_feeders"],
     Rotate=config["board_rotate"] if "board_rotate" in config else 0,
+    RotateZb=config["board_rotate_zb"] if "board_rotate_zb" in config else 0,
+    Aliases=config["aliases"] if "aliases" in config else {},
     Xsize_mm=config["board_xsize_mm"] if "board_xsize_mm" in config else 0,
     Ysize_mm=config["board_ysize_mm"] if "board_ysize_mm" in config else 0,
     BiasRefX_mm=config["board_bias_ref_x_mm"],
@@ -86,6 +87,7 @@ board_info = BoardInfo(
     CorrRep_Ycoeff = config["coef_rep_y"] if "coef_rep_y" in config else 0
 
 )
+mapping = Mapping(config_mapping_file, board_info=board_info)
 
 gen_ecm = GeneratorECM(board_info)
 gen_zb = GeneratorZB(board_info)

@@ -5,6 +5,8 @@ import math
 
 BoardInfoFields = [
     "Rotate",
+    "RotateZb",
+    "Aliases",
     "Xsize_mm",
     "Ysize_mm",
     "GridTrays",

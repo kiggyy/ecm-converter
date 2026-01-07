@@ -19,7 +19,7 @@ class GeneratorZB:
     #        self.parts.generate()
 
     def __adjust_pcb_coordinates(self, point: PcbPoint, bias: bool = False) -> PcbPoint:
-        point = PcbPoint( point.Y, -point.X)
+        point = PcbPoint( point.Y, -point.X) #adjust Y
         return point
 
     def __generate_csv(self, pcb_assets: PcbAssets, file_name) -> None:

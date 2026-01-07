@@ -3,6 +3,7 @@ import shutil
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment
 from bcolors import bcolors
+from generator_ecm import BoardInfo
 
 FLOAT_FORMAT = "F"
 INT_FORMAT = "I"
@@ -33,10 +34,10 @@ MAPPING_COLUMNS = {
 }
 MAPPING_HEADERS = list(MAPPING_COLUMNS.keys())
 
-
 class Mapping:
-    def __init__(self, mapping_file) -> None:
+    def __init__(self, mapping_file, board_info : BoardInfo) -> None:
         self.mapping_file = mapping_file
+        self.board_info = board_info
         self.current_mapping_values = {}
         self.load_mapping()
 
@@ -124,6 +125,8 @@ class Mapping:
 
     def is_part_mounted(self, details) -> bool:    
         feeder = details.get("Feeder", "")
+        if not feeder:
+            return True   # will be reported as missing field later
         if feeder > 900:
             return False
         return True
