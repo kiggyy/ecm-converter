@@ -50,6 +50,10 @@ PACKAGE_TO_ECM_TYPE = {
     "QFP": "QFP",
 }
 
+ALIASES = {
+    "100nF 50V nX7R":"100nF 50V X7R",
+}
+
 
 class ImportPcb:
     def __init__(self, project_name) -> None:
@@ -88,6 +92,12 @@ class ImportPcb:
         index = 0
         for v in values:
             value = v[0][0]
+            if value == "100nF 50V nX7R":
+                pass
+            if value in ALIASES:
+                value = ALIASES[value]
+
+
             footprint = v[0][1].upper().strip()
             if footprint in ["TH", "PCB", "FEDUCIAL", "REFERENCE"]:
                 continue
