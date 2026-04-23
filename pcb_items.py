@@ -4,6 +4,7 @@ import re
 import pandas as pd
 from collections import namedtuple
 from bcolors import bcolors
+from import_pcb import ALIASES
 
 PcbItemFields = [
     "Value",
@@ -91,6 +92,9 @@ class PcbItems:
                 continue
             if not value or not footprint or footprint in ["TH", "PCB"]:
                 continue
+
+            if value in ALIASES:
+                value = ALIASES[value]
 
             key = value + "#:#" + footprint
 

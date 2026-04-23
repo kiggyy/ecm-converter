@@ -42,11 +42,7 @@ class GeneratorZB:
 
             for item in items:
                 if item.Fdr >= 999:
-                    feeder = 48
-                    ignore = '*'
-                else:
-                    feeder = item.Fdr
-                    ignore = ''
+                    continue
                 
                 point = self.__adjust_pcb_coordinates(item.Point)
                 s.append(
