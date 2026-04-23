@@ -42,8 +42,7 @@ class GeneratorZB:
 
             for item in items:
                 if item.Fdr >= 999:
-                    feeder = 48
-                    ignore = '*'
+                    continue
                 else:
                     feeder = item.Fdr
                     ignore = ''
