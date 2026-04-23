@@ -43,7 +43,7 @@ class GeneratorZB:
             for item in items:
                 if item.Fdr >= 999:
                     continue
-                
+
                 point = self.__adjust_pcb_coordinates(item.Point)
                 s.append(
                     "\"{0[Designator]}\",\"{0[Footprint]}\", {1[X]},{1[Y]},0,0,0,0,T,{0[A]},\"{0[Value]}\"".format(
