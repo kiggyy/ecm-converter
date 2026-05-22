@@ -46,9 +46,8 @@ class GeneratorZB:
 
                 point = self.__adjust_pcb_coordinates(item.Point)
                 s.append(
-                    "\"{0[Designator]}\",\"{0[Footprint]}\", {1[X]},{1[Y]},0,0,0,0,T,{0[A]},\"{0[Value]}\"".format(
-                        item._asdict(), point._asdict()
-                    )
+                    "\"{0[Designator]}\",\"{2}\", {1[X]},{1[Y]},0,0,0,0,T,{0[A]},\"{0[Value]}\"".format(
+                        item._asdict(), point._asdict(), item.Footprint[:30])
                 )
 
             f.writelines("\n".join(s))
