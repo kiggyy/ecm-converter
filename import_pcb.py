@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from bcolors import bcolors
 
 FIELD_CASE = "case"
 
@@ -51,9 +52,8 @@ PACKAGE_TO_ECM_TYPE = {
 }
 
 ALIASES = {
-    "100nF 50V nX7R":"100nF 50V X7R",
+#    "100nF 50V nX7R":"100nF 50V X7R",
 }
-
 
 class ImportPcb:
     def __init__(self, project_name) -> None:
@@ -92,8 +92,8 @@ class ImportPcb:
         index = 0
         for v in values:
             value = v[0][0]
-            if value == "100nF 50V nX7R":
-                pass
+#            if value == "100nF 50V nX7R":
+#                pass
             if value in ALIASES:
                 value = ALIASES[value]
 
@@ -102,6 +102,10 @@ class ImportPcb:
             if footprint in ["TH", "PCB", "FEDUCIAL", "REFERENCE"]:
                 continue
             key = value + "#:#" + footprint
+            if key in self.imported_mapping:
+                bcolors.color_print_warning("WARNING: Duplicate value and case combination in PCB file: {}, {}".format(value, footprint))
+                continue
+            
             designators = self.project_name.upper() + ': ' + (
                 str(v[1].designator.count()) + ": "
                 if v[1].designator.count() > 1

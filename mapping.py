@@ -183,7 +183,7 @@ class Mapping:
                 else:
                     if feeder and feeder < 999 :
                         bcolors.color_print_warning("Feeder {} used multiple times".format(feeder))
-                        self.__is_resolved = False
+#                        self.__is_resolved = False
                     
                 #update designators
                 col = self.__get_column_by_name("Designators") - 1
