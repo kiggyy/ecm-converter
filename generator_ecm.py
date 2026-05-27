@@ -213,7 +213,7 @@ class GeneratorECM:
                 )
                 angle = self. __toecm_100(self.__rotate_pcb_angle(item.A, item.Arot))
                 s.append(
-                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:{3}1:{0[H]}:F {4}X {1[X]}Y {1[Y]}A {2}R{0[Remark]}".format(
+                    "{0[Pt]}: {0[Strk]}: {0[Ind]}:0:0:{3}1:{0[H]}:F {4}X{1[X]: }Y{1[Y]: }A {2}R{0[Remark]}".format(
                         item._asdict(), point._asdict(), angle, ignore, feeder
                     )
                 )
