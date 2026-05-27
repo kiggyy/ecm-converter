@@ -1,98 +1,23 @@
-import yaml
 import sys
-import os
 from import_pcb import ImportPcb
 from mapping import Mapping
-from generator_ecm import GeneratorECM, BoardInfo
+from generator_ecm import GeneratorECM
 from generator_zb import GeneratorZB
 from pcb_items import PcbItems
 from pcb_parts import PcbParts
 from bcolors import bcolors
-project_file = sys.argv[-1]
-project_dir, project_file_name_ext = os.path.split(project_file)
-upper_dir = os.path.abspath(os.path.join(project_dir, '..'))
-project_file_name, project_file_ext = os.path.splitext(project_file_name_ext)
+from project_config import build_project_context
 
-def read_config(file_name):
-    try:
-        with open(file_name) as f:
-            return yaml.safe_load(f)
-    except Exception as err:
-        bcolors.color_print_error("CAN't open project file {}: {}".format(file_name, err))
-        bcolors.color_print_error("Exiting")
-        exit(101)
+context = build_project_context(sys.argv[-1])
 
-config = read_config(project_file)
-if "common" in config:
-    common_config_file = config["common"].strip()
-    if common_config_file.lower() == 'up':
-        common_config_file = upper_dir + "/common.yaml"
-    config_common = read_config(common_config_file)
-    if "mapping_file" in config_common:
-        config_common["mapping_file"] = os.path.join(upper_dir, config_common["mapping_file"])
-                                         
-    config = config_common | config
-    
-config_project_name = (
-    project_file_name if "project_name" not in config else config["project_name"]
-)
-config_mapping_file = (
-    config_project_name + "-mapping.xlsx"
-    if "mapping_file" not in config
-    else config["mapping_file"]
-)
-    
-config_import_pcb_file = (
-    config_project_name + ".csv"
-    if "import_pcb_file" not in config
-    else config["import_pcb_file"]
-)
+im = ImportPcb(context.project_name)
 
-config_seq_file = os.path.join(project_dir, config_project_name + ".seq")
-config_zb_csv_file = os.path.join(project_dir, config_project_name + "_zb.csv")
-config_parts_file = os.path.join(project_dir, "part.dat")
+mapping = Mapping(context.mapping_file, board_info=context.board_info)
 
-if project_dir:
-    if ':' not in config_mapping_file:
-        config_mapping_file = os.path.join(project_dir, config_mapping_file)
-    if ':' not in config_import_pcb_file:
-        config_import_pcb_file = os.path.join(project_dir,config_import_pcb_file)
+gen_ecm = GeneratorECM(context.board_info)
+gen_zb = GeneratorZB(context.board_info)
 
-im = ImportPcb(config_project_name)
-
-board_info = BoardInfo(
-    GridTrays=config["grid_trays"],
-    ChipFeeders=config["chip_feeders"],
-    Rotate=config["board_rotate"] if "board_rotate" in config else 0,
-    RotateZb=config["board_rotate_zb"] if "board_rotate_zb" in config else 0,
-    Aliases=config["aliases"] if "aliases" in config else {},
-    Xsize_mm=config["board_xsize_mm"] if "board_xsize_mm" in config else 0,
-    Ysize_mm=config["board_ysize_mm"] if "board_ysize_mm" in config else 0,
-    BiasRefX_mm=config["board_bias_ref_x_mm"],
-    BiasRefY_mm=config["board_bias_ref_y_mm"],
-    BiasCorrX_mm=config["board_bias_correction_x_mm"]
-    if "board_bias_correction_x_mm" in config
-    else 0,
-    BiasCorrY_mm=config["board_bias_correction_y_mm"]
-    if "board_bias_correction_y_mm" in config
-    else 0,
-    Name=config_project_name,
-    Dumping_Xmm = config["board_dumping_x_mm"],
-    Dumping_Ymm = config["board_dumping_y_mm"],
-    CorrRep1_Xmm = config["corr_rep1_x"] if "corr_rep1_x" in config else 0,
-    CorrRep1_Ymm = config["corr_rep1_y"] if "corr_rep1_y" in config else 0,
-    CorrRep2_Xmm = config["corr_rep2_x"] if "corr_rep2_x" in config else 0,
-    CorrRep2_Ymm = config["corr_rep2_y"] if "corr_rep2_y" in config else 0,
-    CorrRep_Xcoeff = config["coef_rep_x"] if "coef_rep_x" in config else 0,
-    CorrRep_Ycoeff = config["coef_rep_y"] if "coef_rep_y" in config else 0
-
-)
-mapping = Mapping(config_mapping_file, board_info=board_info)
-
-gen_ecm = GeneratorECM(board_info)
-gen_zb = GeneratorZB(board_info)
-
-im.read_input(config_import_pcb_file)
+im.read_input(context.import_pcb_file)
 im.generate_imported_values_mapping()
 pcb_items = PcbItems(im.pcb_items)
 changes_count = mapping.merge_mapping(im.imported_mapping)
@@ -102,9 +27,9 @@ if changes_count:
 
 pcb_parts = PcbParts()
 if mapping.is_resolved():
-    gen_ecm.generate(pcb_items, pcb_parts, im.imported_mapping, config_seq_file, config_parts_file)
-    gen_zb.generate(pcb_items, pcb_parts, im.imported_mapping, config_zb_csv_file, config_parts_file)
-    print("Files generated: {} {}".format(config_seq_file,config_parts_file))
+    gen_ecm.generate(pcb_items, pcb_parts, im.imported_mapping, context.seq_file, context.parts_file)
+    gen_zb.generate(pcb_items, pcb_parts, im.imported_mapping, context.zb_csv_file, context.parts_file)
+    print("Files generated: {} {}".format(context.seq_file,context.parts_file))
 else:
     bcolors.color_print_error("ERROR: Mapping IS NOT resolved, exiting")
 

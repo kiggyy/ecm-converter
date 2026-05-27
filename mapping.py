@@ -242,6 +242,45 @@ class Mapping:
             return self.mapping_headers[name]
         return -1
 
+    def get_current_mapping(self) -> dict:
+        mapping = {}
+        for key, row_no in self.current_mapping_values.items():
+            row = self.sheet[row_no]
+            p = {"row": row_no}
+            for name in self.mapping_headers:
+                if name is None:
+                    continue
+                p[name] = row[self.__get_column_by_name(name) - 1].value
+            mapping[key] = p
+        return mapping
+
+    def apply_updates(self, updates: dict) -> None:
+        for key, fields in updates.items():
+            row_no = self.current_mapping_values.get(key, 0)
+            if row_no < 1:
+                bcolors.color_print_warning("WARNING: Can't update absent mapping value {}".format(key))
+                continue
+            for field, value in fields.items():
+                col = self.__get_column_by_name(field)
+                if col == -1:
+                    continue
+                cell = self.sheet.cell(row=row_no, column=col)
+                cell.value = value
+                if value not in ("", None) and field in MAPPING_COLUMNS and "format" in MAPPING_COLUMNS[field]:
+                    format = MAPPING_COLUMNS[field]["format"]
+                    if format == FLOAT_FORMAT:
+                        cell.value = float(value)
+                    elif format == INT_FORMAT:
+                        cell.value = int(float(value))
+
+        if not self.__is_new:
+            shutil.copy(self.mapping_file, self.mapping_file + ".bak")
+        try:
+            self.workbook.save(filename=self.mapping_file)
+        except Exception as err:
+            print("CAN't update mapping file {}: {}\nExiting!".format(self.mapping_file, err))
+            exit(100)
+
     def save_mapping(self, mapping) -> None:
         self.sheet = self.workbook.active
         row = 2
